@@ -43,39 +43,9 @@ const replyWorker = async (userId) => {
 
     const notificationIds = promises.map((obj) => obj._id?.toString());
 
-    await redisPub.publish(
-      "reply-notification",
-      JSON.stringify(notificationIds)
-    );
+    await redisPub.publish("notification", JSON.stringify(notificationIds));
 
     console.log(`[Worker] Sent reply notification to user ${userId}`);
-    // promises.forEach((promise) => {
-    //   const notificationData = JSON.parse(JSON.stringify(promise));
-
-    //   const findPost = allLikesSenderAndPost.find(
-    //     (obj) =>
-    //       obj.post._id?.toString() === notificationData.post?.toString()
-    //   )?.post;
-
-    //   const senders = notificationData.sender
-    //     .map((userId) => {
-    //       return allLikesSenderAndPost.find(
-    //         (obj) => obj.sender._id === userId?.toString()
-    //       )?.sender;
-    //     })
-    //     .filter(Boolean);
-
-    //   io.to(userId).emit("notification", {
-    //     ...notificationData,
-    //     message: notificationMsg(notificationData),
-    //     sender: senders,
-    //     post: findPost,
-    //   });
-    // });
-
-    // const notificationCount = await getNotificationCountByUserIdDB(userId);
-
-    // io.to(userId).emit("notification-count", notificationCount);
   }
   await redisClient.del(key);
   await redisClient.del(`reply-unqiue-postId:${userId}`);
