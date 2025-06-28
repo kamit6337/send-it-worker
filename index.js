@@ -11,6 +11,10 @@ try {
   console.log("Connecting to MongoDB...");
   await connectToDB();
 
+  app.get("/", (req, res) => {
+    res.json("Sendit-Worker Home Page");
+  });
+
   app.listen(PORT, () => {
     console.log(`Server is connected on port ${PORT}`);
   });
