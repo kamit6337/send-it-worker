@@ -1,54 +1,49 @@
 import redisClient, { redisPub } from "../../redis/redisClient.js";
 import filterFollowerIds from "../../utils/javaScript/filterFollowerIds.js";
-import createNewNotificationDB from "../../database/Notification/createNewNotificationDB.js";
+import Notification from "../../models/NotificationModel.js";
 
 const replyWorker = async (userId) => {
   const key = `reply-batch-list:${userId}`;
 
   const replyRaw = await redisClient.lrange(key, 0, -1);
 
-  const uniquePostIds = await redisClient.smembers(
-    `reply-unqiue-postId:${userId}`
-  );
-
   const allReplysSenderAndPost = replyRaw.map(JSON.parse);
 
-  if (uniquePostIds.length > 0 && allReplysSenderAndPost.length > 0) {
-    const uniquePostIdWithReply = uniquePostIds.map((postId) => {
-      const filterReply = allReplysSenderAndPost.filter(
-        (obj) => obj.post._id === postId
-      );
-      return { post: postId, reply: filterReply };
-    });
+  if (allReplysSenderAndPost.length === 0) return;
 
-    const promises = await Promise.all(
-      uniquePostIdWithReply.map((obj) => {
-        const { post, reply } = obj;
+  const replyObj = {};
 
-        const allSenderIds = [...new Set(reply.map((obj) => obj.sender._id))];
+  allReplysSenderAndPost.forEach((obj) => {
+    const { sender, post } = obj;
+    if (replyObj[post]) {
+      replyObj[post] = [...new Set([sender, ...replyObj[post]])];
+    } else {
+      replyObj[post] = [sender];
+    }
+  });
 
-        const savingSenderIds = filterFollowerIds(allSenderIds);
+  const newNotificationList = Object.keys(replyObj).map((post) => {
+    const allSenderIds = likeObj[post];
 
-        const newNotificationObj = {
-          user: userId,
-          type: "reply",
-          sender: savingSenderIds,
-          totalSenders: allSenderIds.length,
-          post,
-        };
+    const savingSenderIds = filterFollowerIds(allSenderIds);
 
-        return createNewNotificationDB(newNotificationObj);
-      })
-    );
+    return {
+      user: userId,
+      type: "reply",
+      sender: savingSenderIds,
+      totalSenders: allSenderIds.length,
+      post,
+    };
+  });
 
-    const notificationIds = promises.map((obj) => obj._id?.toString());
+  const newNotifications = await Notification.insertMany(newNotificationList);
 
-    await redisPub.publish("notification", JSON.stringify(notificationIds));
+  const notificationIds = newNotifications.map((obj) => obj._id?.toString());
 
-    console.log(`[Worker] Sent reply notification to user ${userId}`);
-  }
+  await redisPub.publish("notification", JSON.stringify(notificationIds));
+
+  console.log(`[Worker] Sent reply notification to user ${userId}`);
   await redisClient.del(key);
-  await redisClient.del(`reply-unqiue-postId:${userId}`);
 };
 
 export default replyWorker;

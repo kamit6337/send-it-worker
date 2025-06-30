@@ -37,8 +37,6 @@ const likeWorker = async (userId) => {
     };
   });
 
-  console.log("newNotificationList", newNotificationList);
-
   const newNotifications = await Notification.insertMany(newNotificationList);
 
   const notificationIds = newNotifications.map((obj) => obj._id?.toString());
