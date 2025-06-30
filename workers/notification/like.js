@@ -7,25 +7,24 @@ const likeWorker = async (userId) => {
 
   const likeRaw = await redisClient.lrange(key, 0, -1);
 
-  const uniquePostIds = await redisClient.smembers(
-    `like-unqiue-postId:${userId}`
-  );
-
   const allLikesSenderAndPost = likeRaw.map(JSON.parse);
+  // [{sender, post}, {sender, post}]
 
-  if (uniquePostIds.length === 0 || allLikesSenderAndPost.length === 0) return;
+  if (allLikesSenderAndPost.length === 0) return;
 
-  const uniquePostIdWithLikes = uniquePostIds.map((postId) => {
-    const filterLike = allLikesSenderAndPost.filter(
-      (obj) => obj.post._id === postId
-    );
-    return { post: postId, like: filterLike };
+  const likeObj = {};
+
+  allLikesSenderAndPost.forEach((obj) => {
+    const { sender, post } = obj;
+    if (likeObj[post]) {
+      likeObj[post] = [...new Set([sender, ...likeObj[post]])];
+    } else {
+      likeObj[post] = [sender];
+    }
   });
 
-  const newNotificationList = uniquePostIdWithLikes.map((obj) => {
-    const { post, like } = obj;
-
-    const allSenderIds = [...new Set(like.map((obj) => obj.sender._id))];
+  const newNotificationList = Object.keys(likeObj).map((post) => {
+    const allSenderIds = likeObj[post];
 
     const savingSenderIds = filterFollowerIds(allSenderIds);
 
@@ -49,7 +48,6 @@ const likeWorker = async (userId) => {
   console.log(`[Worker] Sent Like notification to user ${userId}`);
 
   await redisClient.del(key);
-  await redisClient.del(`like-unqiue-postId:${userId}`);
 };
 
 export default likeWorker;
