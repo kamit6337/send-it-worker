@@ -28,6 +28,8 @@ const worker = new Worker(
       const updateChatMsgs = chatMsgs.map((c) => ({
         ...c,
         _id: ObjectID(c._id),
+        isSeen: c.isSeen === "true",
+        deleted: c.deleted === "true",
         createdAt: new Date(Number(c.createdAt)),
         updatedAt: new Date(Number(c.updatedAt)),
       }));
