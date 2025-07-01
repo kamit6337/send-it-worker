@@ -26,6 +26,13 @@ const notificationSchema = new Schema(
         required: true,
       },
     ],
+    senderIds: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+    ],
     totalSenders: {
       type: Number,
       default: 0,

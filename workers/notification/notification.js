@@ -3,13 +3,14 @@ import { createWorkerRedis } from "../../redis/redisClient.js";
 import followerWorker from "./follower.js";
 import likeWorker from "./like.js";
 import replyWorker from "./reply.js";
+import unfollowWorker from "./unfollow.js";
 
 // BullMQ connection — don't use this for native Redis commands
 const bullConnection = createWorkerRedis();
 
-// Worker to process batch after 5 minutes
+// Worker to process batch after 1 minutes
 
-const notificationTypes = ["follower", "like", "reply"];
+const notificationTypes = ["follower", "unfollow", "like", "reply"];
 
 const worker = new Worker(
   "notification-batch",
@@ -18,7 +19,9 @@ const worker = new Worker(
       const message = job.name;
       const { userId } = job.data;
 
-      if (message === `notification-follower`) {
+      if (message === `notification-unfollow`) {
+        await unfollowWorker(userId);
+      } else if (message === `notification-follower`) {
         await followerWorker(userId);
       } else if (message === `notification-like`) {
         await likeWorker(userId);

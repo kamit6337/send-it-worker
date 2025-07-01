@@ -31,6 +31,7 @@ const replyWorker = async (userId) => {
       user: userId,
       type: "reply",
       sender: savingSenderIds,
+      senderIds: allSenderIds,
       totalSenders: allSenderIds.length,
       post,
     };

@@ -2,8 +2,8 @@ import redisClient, { redisPub } from "../../redis/redisClient.js";
 import filterFollowerIds from "../../utils/javaScript/filterFollowerIds.js";
 import Notification from "../../models/NotificationModel.js";
 
-const followerWorker = async (userId) => {
-  const key = `follower-batch-list:${userId}`;
+const unfollowWorker = async (userId) => {
+  const key = `unfollow-batch-list:${userId}`;
 
   const followers = await redisClient.smembers(key);
 
@@ -13,7 +13,7 @@ const followerWorker = async (userId) => {
 
   const newNotificationObj = {
     user: userId,
-    type: "follower",
+    type: "unfollow",
     sender: savingFollowerIds,
     senderIds: followers,
     totalSenders: followers.length,
@@ -30,4 +30,4 @@ const followerWorker = async (userId) => {
   await redisClient.del(key);
 };
 
-export default followerWorker;
+export default unfollowWorker;

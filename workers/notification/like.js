@@ -32,6 +32,7 @@ const likeWorker = async (userId) => {
       user: userId,
       type: "like",
       sender: savingSenderIds,
+      senderIds: allSenderIds,
       totalSenders: allSenderIds.length,
       post,
     };
