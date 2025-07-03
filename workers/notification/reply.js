@@ -23,7 +23,7 @@ const replyWorker = async (userId) => {
   });
 
   const newNotificationList = Object.keys(replyObj).map((post) => {
-    const allSenderIds = likeObj[post];
+    const allSenderIds = replyObj[post];
 
     const savingSenderIds = filterFollowerIds(allSenderIds);
 
